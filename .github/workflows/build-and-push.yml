@@ -1,0 +1,70 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - rc/* # Release Candidate channel
+      - release/* # Stable channel
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Set Docker image channel tag
+        id: tag
+        run: |
+          if [[ ${{ github.ref }} == refs/heads/release/* ]]; then
+            echo "CHANNEL_TAG=stable" >> $GITHUB_ENV
+          elif [[ ${{ github.ref }} == refs/heads/rc/* ]]; then
+            echo "CHANNEL_TAG=rc" >> $GITHUB_ENV
+          else
+            echo "CHANNEL_TAG=dev" >> $GITHUB_ENV
+          fi
+
+      - name: Get the current year and month
+        id: date
+        run: echo "DATE_TAG=$(date +'%Y.%m')" >> $GITHUB_ENV
+
+      - name: Get the latest image for the channel
+        id: latest_image
+        run: |
+          # Fetch the latest version of the image for the current channel (dev/rc/stable)
+          API_URL="https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/${{ github.repository }}/versions"
+          LATEST_TAG=$(curl -s -H "Authorization: Bearer ${{ secrets.GHCR_TOKEN }}" $API_URL | jq -r '[.[] | select(.metadata.container.tags[] | startswith("${{ env.CHANNEL_TAG }}-"))][0].metadata.container.tags[0]')
+
+          # Check if a valid image was found
+          if [[ -z "$LATEST_TAG" ]]; then
+            echo "LATEST_BUILD_COUNT=0" >> $GITHUB_ENV
+          else
+            # Extract the version part (YYYY.MM.n) from the latest tag
+            LATEST_DATE_TAG=$(echo $LATEST_TAG | cut -d '-' -f 2 | cut -d '.' -f 1,2)
+            LATEST_BUILD_COUNT=$(echo $LATEST_TAG | cut -d '.' -f 3)
+
+            # If the latest tag is from the current month, increment the build count
+            if [[ $LATEST_DATE_TAG == ${{ env.DATE_TAG }} ]]; then
+              echo "LATEST_BUILD_COUNT=$LATEST_BUILD_COUNT" >> $GITHUB_ENV
+            else
+              # If the latest tag is not from the current month, reset the count
+              echo "LATEST_BUILD_COUNT=0" >> $GITHUB_ENV
+            fi
+          fi
+
+      - name: Set Docker image version
+        id: version
+        run: |
+          # Increment the build count for the current month
+          BUILD_COUNT=$((LATEST_BUILD_COUNT + 1))
+          echo "VERSION_TAG=${{ env.DATE_TAG }}.$BUILD_COUNT" >> $GITHUB_ENV
+
+      - name: Build Docker image
+        run: docker build -t ghcr.io/${{ github.repository }}/my-app:${{ env.CHANNEL_TAG }}-${{ env.VERSION_TAG }} .
+
+      - name: Push Docker image
+        run: docker push ghcr.io/${{ github.repository }}/my-app:${{ env.CHANNEL_TAG }}-${{ env.VERSION_TAG }}
