@@ -1,0 +1,8 @@
+{
+    "[github-actions-workflow]": {
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "yaml.schemas": {
+        "https://json.schemastore.org/github-workflow.json": "file:///Users/terry/Documents/repositories/race_ubuntu/.github/workflows/build-and-push.yml"
+    },
+}
