@@ -1,0 +1,61 @@
+#!/bin/bash
+
+function create_container() {
+    # TODO(Terry): Update `install-docker.sh` to share /home/$(id -un) with docker
+    # terry@Terrys-MBP race_ubuntu % ./race_ubuntu start
+    # Error response from daemon: Mounts denied:
+    # The path /home/terry/race is not shared from the host and is not known to Docker.
+    # You can configure shared paths from Docker -> Preferences... -> Resources -> File Sharing.
+    # See https://docs.docker.com/desktop/settings/mac/#file-sharing for more info.
+    # Error: failed to start containers: Terrys-MBP
+    docker create \
+        --interactive \
+        --name=$(id -un) \
+        --hostname=$(hostname) \
+        --network=host \
+        --volume=/Users/$(id -un)/race:/home/race:rw \
+        race_ubuntu:latest
+}
+
+function start_container() {
+    docker start $(id -un)
+}
+
+function stop_container() {
+    docker stop $(id -un)
+}
+
+function remove_container() {
+    docker rm $(id -un)
+}
+
+function help() {
+    echo "Usage: $0 {create|start|stop|rm}"
+}
+
+function main() {
+    case $1 in
+    create)
+        create_container
+        ;;
+    start)
+        start_container
+        ;;
+    stop)
+        stop_container
+        ;;
+    rm)
+        remove_container
+        ;;
+    help)
+        help
+        ;;
+    *)
+        echo "Invalid command"
+        help
+        exit 1
+        ;;
+    esac
+}
+
+main "$@"
