@@ -19,6 +19,25 @@ RUN /opt/race/scripts/install-apt.sh
 RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Install arch specific bazelisk
+RUN case $(uname -m) in \
+    x86_64) \
+    curl -o /tmp/bazelisk -L https://github.com/bazelbuild/bazelisk/releases/download/v1.21.0/bazelisk-linux-amd64; \
+    ;;\
+    aarch64) \
+    curl -o /tmp/bazelisk -L https://github.com/bazelbuild/bazelisk/releases/download/v1.21.0/bazelisk-linux-arm64; \
+    ;;\
+    *) \
+    echo "Unsupported architecture"; \
+    exit 1; \
+    ;;\
+    esac \
+    && ls -l /tmp/bazelisk \
+    && chmod +x /tmp/bazelisk \
+    && mv /tmp/bazelisk /usr/local/bin/bazel
+# Clean up
+RUN rm -rf /tmp/*
+
 # Create a root user
 RUN useradd -m -s /bin/bash race && adduser race sudo
 RUN sed -i 's/%sudo\tALL=(ALL:ALL) ALL/%sudo\tALL=(ALL:ALL) NOPASSWD: ALL/g' /etc/sudoers
