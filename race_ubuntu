@@ -7,13 +7,13 @@ function create_container() {
     # The path /home/terry/race is not shared from the host and is not known to Docker.
     # You can configure shared paths from Docker -> Preferences... -> Resources -> File Sharing.
     # See https://docs.docker.com/desktop/settings/mac/#file-sharing for more info.
-    # Error: failed to start containers: Terrys-MBP
+    # Get the user's home directory in
     docker create \
         --interactive \
-        --name=$1 \
-        --hostname=$(hostname) \
+        --name="$1" \
+        --hostname="$(hostname)" \
         --network=host \
-        --volume=/Users/$(id -un)/race:/home/race:rw \
+        --volume="$HOME/race:/home/race:rw" \
         race_ubuntu:latest
 }
 
@@ -34,8 +34,8 @@ function help() {
 }
 
 function main() {
-    local container_name=$(id -un)
-    if [[ $# -gt 2]]; then
+    local container_name=$USER
+    if [[ $# -gt 2 ]]; then
         container_name="$1"
         shift
     fi
