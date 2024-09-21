@@ -29,33 +29,44 @@ function remove_container() {
     docker rm $1
 }
 
+function list () {
+    docker ps -a --filter "ancestor=race_ubuntu"
+}
+
 function help() {
     echo "Usage: $0 {create|start|stop|rm} [container_name]"
 }
 
 function main() {
     local container_name=$USER
-    if [[ $# -gt 1 ]]; then
-        container_name="$2"
+    local command=$1
+    shift
+    if [[ $# -gt 0 ]]; then
+        container_name="$1"
+        shift
     fi
-    case $1 in
+    shift
+    case $command in
     create)
-        create_container $container_name
+        create_container $container_name $@
         ;;
     start)
-        start_container $container_name
+        start_container $container_name $@
         ;;
     stop)
-        stop_container $container_name
+        stop_container $container_name $@
         ;;
     rm)
-        remove_container $container_name
+        remove_container $container_name $@
+        ;;
+    list)
+        list $@
         ;;
     help)
         help
         ;;
     *)
-        echo "Invalid command"
+        echo "Invalid command $command"
         help
         exit 1
         ;;
