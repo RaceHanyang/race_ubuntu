@@ -10,7 +10,7 @@ function create_container() {
     # Error: failed to start containers: Terrys-MBP
     docker create \
         --interactive \
-        --name=$(id -un) \
+        --name=$1 \
         --hostname=$(hostname) \
         --network=host \
         --volume=/Users/$(id -un)/race:/home/race:rw \
@@ -18,34 +18,39 @@ function create_container() {
 }
 
 function start_container() {
-    docker start $(id -un)
+    docker start $1
 }
 
 function stop_container() {
-    docker stop $(id -un)
+    docker stop $1
 }
 
 function remove_container() {
-    docker rm $(id -un)
+    docker rm $1
 }
 
 function help() {
-    echo "Usage: $0 {create|start|stop|rm}"
+    echo "Usage: $0 {create|start|stop|rm} [container_name]"
 }
 
 function main() {
+    local container_name=$(id -un)
+    if [[ $# -gt 2]]; then
+        container_name="$1"
+        shift
+    fi
     case $1 in
     create)
-        create_container
+        create_container container_name
         ;;
     start)
-        start_container
+        start_container container_name
         ;;
     stop)
-        stop_container
+        stop_container container_name
         ;;
     rm)
-        remove_container
+        remove_container container_name
         ;;
     help)
         help
