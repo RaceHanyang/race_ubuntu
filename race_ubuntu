@@ -10,7 +10,7 @@ function create_container() {
     # Get the user's home directory in
     docker create \
         --interactive \
-        --name="$1" \
+        --name=$1 \
         --hostname="$(hostname)" \
         --network=host \
         --volume="$HOME/race:/home/race:rw" \
@@ -35,22 +35,21 @@ function help() {
 
 function main() {
     local container_name=$USER
-    if [[ $# -gt 2 ]]; then
-        container_name="$1"
-        shift
+    if [[ $# -gt 1 ]]; then
+        container_name="$2"
     fi
     case $1 in
     create)
-        create_container container_name
+        create_container $container_name
         ;;
     start)
-        start_container container_name
+        start_container $container_name
         ;;
     stop)
-        stop_container container_name
+        stop_container $container_name
         ;;
     rm)
-        remove_container container_name
+        remove_container $container_name
         ;;
     help)
         help
