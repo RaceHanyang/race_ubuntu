@@ -8,6 +8,18 @@ function create_container() {
     # You can configure shared paths from Docker -> Preferences... -> Resources -> File Sharing.
     # See https://docs.docker.com/desktop/settings/mac/#file-sharing for more info.
     # Get the user's home directory in
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --volume)
+                shift
+                local volume=$1
+                shift
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
     docker create \
         --interactive \
         --name=$1 \
